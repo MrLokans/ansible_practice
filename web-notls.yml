@@ -1,0 +1,24 @@
+- name: Configure nginx
+  hosts: webservers
+  sudo: True
+  tasks:
+    - name: install nginx server
+      apt: name=nginx update_cache=yes
+
+    - name: copy site configuration
+      file: src=/etc/nginx.conf dest=/etc/nginx/sites-available/default
+
+    - name: enable site configuration
+      file: >
+        src=/etc/nginx/sites-available/default
+        dest=/etc/nginx/sites-enabled/default
+        state=link
+
+    - name: copy index page
+      template: >
+        src=templates/index.html.j2
+        dest=/usr/share/nginx/html/index.html
+        mode=0644
+
+    - name: reload nginx
+      service: name=nginx state=restarted
