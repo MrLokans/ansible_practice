@@ -1,0 +1,44 @@
+# to generate a self-signed certificate next command is used:
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -subj /CN=localhost -keyout files/nginx.key -out files/nginx.crt
+
+- name: Configure nginx with TLS support
+  hosts: webservers
+  sudo: True
+  vars:
+    key_path: /etc/nginx/ssl/nginx.key
+    cert_path: /etc/nginx/ssl/nginx.crt
+    conf_path: /etc/nginx/sites-available/default
+    server_name: localhost
+  tasks:
+    - name: install nginx server
+      apt: name=nginx update_cache=yes cache_valid_time=3600
+
+    - name: create certificate directories
+      file: path=/etc/nginx/ssl state=directory
+
+    - name: copy TLS key
+      copy: src=files/nginx.key dest={{ key_path }} owner=root mode=0600
+
+    - name: copy TLS cert
+      copy: src=files/nginx.crt dest={{ cert_path }}
+      notify: restart nginx
+
+    - name: copy site configuration
+      template: src=templates/nginx.conf.j2 dest={{ conf_path }}
+      notify: restart nginx
+
+    - name: enable site configuration
+      file: src={{ conf_path }} dest=/etc/nginx/sites-enabled/default state=link
+      notify: restart nginx
+
+    - name: copy index page
+      template: >
+        src=templates/index.html.j2
+        dest=/usr/share/nginx/html/index.html
+        mode=0644
+
+# Handlers only run ONCE and AFTER ALL of the tasks.
+# They are also run in order of their definition order.
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
