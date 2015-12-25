@@ -1,0 +1,8 @@
+- Configure the web servers with the hostname, port, username, password of the
+primary postgres server, and name of the database.
+- Configure the task queues with the hostname, port, username, password of the
+primary postgres server, and the name of the database.
+- Configure the web servers with the hostname and port of the RabbitMQ server.
+- Configure the task queues with the hostname and port of the RabbitMQ server.
+- Configure the primary postgres server with the hostname, port, and username
+and password of the replica postgres server (production only).
