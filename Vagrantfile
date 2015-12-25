@@ -20,7 +20,7 @@ Vagrant.configure(2) do |config|
   config.vm.define "vagrant3" do |vagrant3|
       vagrant3.vm.box = "ubuntu/trusty64"
       vagrant3.vm.network "forwarded_port", guest: 80, host: 8082
-      vagrant3.vm.network "forwarded_port", guest: 443, host: 8444
+      vagrant3.vm.network "forwarded_port", guest: 443, host: 8445
   end
 
 
