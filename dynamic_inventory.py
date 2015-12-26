@@ -27,6 +27,20 @@ def list_running_hosts():
     return hosts
 
 
+def get_host_ssh_info(host):
+    cmd = ["vagrant", "ssh-config", host]
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    config = paramiko.SSHConfig()
+    config.parse(p.stdout)
+    c = config.lookup(host)
+    return {
+        'ansible_ssh_host': c['hostname'],
+        'ansible_ssh_port': c['port'],
+        'ansible_ssh_user': c['user'],
+        'ansible_ssh_private_key_file': c['identityfile'][0]
+    }
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Vagrant dynamic host information")
     group = parser.add_mutually_exclusive_group(required=True)
