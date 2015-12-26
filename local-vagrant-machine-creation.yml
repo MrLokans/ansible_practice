@@ -7,6 +7,7 @@
 
   tasks:
     - name: Initialize local virtual machine
+      # Note: if Vagrantfile exists it won't be created again  
       command: vagrant init {{ box }} creates=Vagrantfile
 
     - name: Start virtual machine
