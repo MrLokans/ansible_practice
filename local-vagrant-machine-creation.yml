@@ -1,0 +1,28 @@
+- name: Create and provision a vagrant machine
+
+  hosts: localhost
+
+  vars:
+    box: trusty64
+
+  tasks:
+    - name: Initialize local virtual machine
+      command: vagrant init {{ box }} creates=Vagrantfile
+
+    - name: Start virtual machine
+      command: vagrant up
+
+    - name: add new virtual machine to Ansible's inventory
+      add_host: >
+        name=vagrant
+        ansible_ssh_host=127.0.0.1
+        ansible_ssh_port=2222
+        ansible_ssh_user=vagrant
+        ansible_ssh_private_key_file=~/vagrant.d/insecure_private_key
+
+- name: Some tasks for the newly created machine
+  hosts: vagrant
+  sudo: yes
+  tasks:
+    - name: Sample nginx installation
+      apt: name=nginx update_cache=yes
