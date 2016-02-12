@@ -1,0 +1,32 @@
+---
+- hosts: node
+  sudo: yes
+
+  tasks:
+    - name: Import EPEL and Remi GPG keys.
+      rpm_key: "key={{ item }} state=present"
+      with_items:
+        - "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7"
+        - "http://rpms.remirepo.net/RPM-GPG-KEY-remi"
+
+    - name: Install EPEL and Remi repos
+      # creates means that if the specified file exists it won't be created once again
+      command: "rpm -Uvh --force {{ item.href }} creates={{ item.creates }}"
+      with_items:
+        - {
+          href: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
+          creates: "/etc/yum.repos.d/epel.repo"
+        }
+        - {
+          href: "http://rpms.famillecollet.com/enterprise/remi-release-7.rpm",
+          creates: "/etc/yum.repos.d/remi.repo"
+        }
+
+    # - name: Disable firewall for the dev environment
+    #   service: name=iptables state=stopped enabled=no
+
+    - name: Install Node.js and npm
+      yum: name=npm state=present enablerepo=epel
+
+    - name: Install Forever
+      npm: name=forever global=yes state=latest
