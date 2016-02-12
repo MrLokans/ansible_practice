@@ -1,6 +1,8 @@
 ---
 - hosts: node
   sudo: yes
+  vars:
+    node_app_location: ~/node
 
   tasks:
     - name: Import EPEL and Remi GPG keys.
@@ -30,3 +32,12 @@
 
     - name: Install Forever
       npm: name=forever global=yes state=latest
+
+    - name: Ensure application folder exists
+      file: "path={{ node_app_location }} state=directory"
+
+    - name: Copy application to the server
+      copy: "src=app dest={{ node_app_location }}"
+
+    - name: Install app dependencies
+      npm: path={{ node_app_location }}/app

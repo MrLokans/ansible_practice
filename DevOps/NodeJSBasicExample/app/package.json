@@ -3,6 +3,6 @@
     "description": "Express app to show simple deploy process",
     "author": "MrLokans",
     "dependencies": {
-        "express": "*"
-    },
+        "express": "3.x.x"
+    }
 }
