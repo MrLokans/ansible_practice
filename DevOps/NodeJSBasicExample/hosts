@@ -1,7 +1,7 @@
 [node]
-192.168.60.1
+192.168.60.2
 
-[multi:childred]
+[multi:children]
 node
 
 [multi:vars]
