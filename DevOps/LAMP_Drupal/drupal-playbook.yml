@@ -39,6 +39,9 @@
     - python-mysqldb
     - mysql-server
 
+  # If on a production server or any server exposed to the Internet, 
+  # you should instead have a restrictive firewall only allowing access on
+  # ports 22, 80, 443, and other necessary ports.
   - name: Disable firewall (Dev Environment)
     service: name=ufw state=stopped
 
@@ -47,3 +50,29 @@
     with_items: 
        - apache2
        - mysql
+
+  - name: Enable rewrite module for Drupal
+    apache2_module: name=rewrite state=present
+    notify: restart apache
+
+  - name: Add Apache virtualhost
+    template:
+      src: "templates/drupal.dev.conf.j2"
+      dest: "/etc/apache2/sites-available/{{ domain }}.dev.conf"
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart apache
+
+  - name: Symlink virtualhost
+    file:
+      src: "/etc/apache2/sites-available/{{ domain }}.dev.conf"
+      dest: "/etc/apache2/sites-enabled/{{ domain }}.dev.conf"
+      state: link
+    notify: restart apache
+
+  - name: remove default virtualhost
+    file:
+      path: "/etc/apache2/sites-enabled/000-default"
+      state: absent
+    notify: restart apache
