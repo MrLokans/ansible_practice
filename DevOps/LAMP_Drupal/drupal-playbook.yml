@@ -1,0 +1,49 @@
+- hosts: all
+  sudo: yes
+  
+  vars_files:
+  - vars.yml
+
+  pre_tasks:
+  - name: Update apt cache if required
+    apt: update_cache=yes cache_valid_time=10800
+
+  # --force-handlers key may be used to always run handlers even if task failed
+  handlers:
+  - name: restart apache
+    service: name=apache2 state=restarted
+
+  tasks:
+  - name: Install packages for repository management
+    apt: name={{ item }} state=installed
+    with_items: 
+      - python-apt
+      - python-pycurl
+
+  - name: Install Apache, MySQL, PHP, and other dependencies.
+    apt: name={{ item }} state=installed
+    with_items: 
+    - git
+    - curl
+    - sendmail
+    - apache2
+    - php5
+    - php5-common
+    - php5-mysql
+    - php5-cli
+    - php5-gd
+    - php5-dev
+    - php5-mcrypt
+    - php-apc
+    - php-pear
+    - python-mysqldb
+    - mysql-server
+
+  - name: Disable firewall (Dev Environment)
+    service: name=ufw state=stopped
+
+  - name: Start Apace, MySQL, and PHP
+    service: name={{ item }} state=started enabled=yes
+    with_items: 
+       - apache2
+       - mysql
