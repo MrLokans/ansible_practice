@@ -45,11 +45,11 @@
   - name: Disable firewall (Dev Environment)
     service: name=ufw state=stopped
 
-  - name: Start Apace, MySQL, and PHP
-    service: name={{ item }} state=started enabled=yes
-    with_items: 
-       - apache2
-       - mysql
+  # - name: Start Apache, MySQL, and PHP
+  #   service: name={{ item }} state=started enabled=yes
+  #   with_items: 
+  #      - apache2
+  #      - mysql
 
   - name: Enable rewrite module for Drupal
     apache2_module: name=rewrite state=present
@@ -76,3 +76,46 @@
       path: "/etc/apache2/sites-enabled/000-default"
       state: absent
     notify: restart apache
+
+  - name: Enable upload progress via APC
+    lineinfile:
+      dest: "/etc/php5/apache2/conf.d/20-apcu.ini"
+      # here we find config line and change it
+      regexp: "^apc.rfc1867"
+      line: "apc.rfc1867 = 1"
+      state: present
+    notify: restart
+
+  # in production default credentials for MySQL MUST be changed!
+  - name: Remove the MySQL test database.
+    mysql_db: db=test state=absent
+
+  - name: Create Drupal database
+    mysql_db: "db={{ domain }} state=present"
+
+  - name: Install Composer
+    shell: >
+      curl -sS https://getcomposer.org/installer | php
+      creates=/usr/local/bin/composer
+
+  - name: Move Composer into globally-accessible location
+    shell: >
+      mv composer.phar /usr/local/bin/composer
+      creates=/usr/local/bin/composer
+
+  - name: Check out drush master branch
+    git:
+      repo: https://github.com/drush-ops/drush.git
+      dest: /opt/drush
+
+  - name: Install Drush deps with Composer
+    shell: >
+      /usr/local/bin/composer install
+      chdir=/opt/drush
+      creates=/opt/drush/vendor/autoload.php
+
+  - name: Create drush bin symlink
+    file:
+      src: /opt/drush/drush
+      dest: /usr/local/bin/drush
+      state: link
