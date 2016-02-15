@@ -1,0 +1,15 @@
+VAGRANTFILE_API_VERSION = "2"
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+	config.vm.box = "geerlingguy/centos7"
+	config.vm.hostname = "jenkins.dev"
+	config.vm.network :private_network, ip: "192.168.70.2"
+	config.ssh.insert_key = false
+	config.vm.provider :virtualbox do |vb|
+		vb.customize ["modifyvm", :id, "--memory", "512"]
+	end
+	
+	config.vm.provision "ansible" do |ansible|
+		ansible.playbook = "provision.yml"
+		ansible.sudo = true
+	end
+end
