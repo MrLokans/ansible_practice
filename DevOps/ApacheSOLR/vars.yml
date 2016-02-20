@@ -1,0 +1,3 @@
+download_dir: /tmp
+solr_dir: /opt/solr
+solr_url: http://apache.osuosl.org/lucene/solr/5.4.1/solr-5.4.1.tgz
