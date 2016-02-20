@@ -8,3 +8,23 @@
   pre_tasks:
     - name: Update apt-cache if needed.
       apt: update_cache=yes cache_valid_time=7200 
+
+  handlers:
+    - name: restart tomcat
+      service: name=tomcat7 state=restarted
+
+  tasks:
+    - name: Install Tomcat 7.
+      apt: "name={{ item }} state=installed"
+      with_items:
+        - tomcat7
+        - tomcat7-admin
+
+    - name: Ensure Tomcat 7 is started and enabled on boot
+      service: name=tomcat7 state=started enabled=yes
+
+    - name: Download Solr.
+      get_url:
+        url: "{{ solr_url }}"
+        dest: "{{ download_dir }}/solr-{{ solr_version }}.tgz"
+        sha256sum: "{{ solr_sha256_hash }}" 
