@@ -27,7 +27,7 @@
       get_url:
         url: "{{ solr_url }}"
         dest: "{{ download_dir }}/solr-{{ solr_version }}.tgz"
-        sha256sum: "{{ solr_sha256_hash }}"
+        # sha256sum: "{{ solr_sha256_hash }}"
 
     - name: Expand Solr.
       command: >
@@ -39,5 +39,33 @@
 
     - name: Copy Solr to the specified dir.
       command: >
-        cp -r {{ download_dir }}/solr-{{ solr_version }} {{ solr_dir }}
-        creates={{ solr_dir }}/dist/solr-{{ solr_version }}
+        cp -r {{ download_dir }}/solr-{{ solr_version }}/. {{ solr_dir }}
+        creates={{ solr_dir }}/dist/solr-{{ solr_version }}.war
+
+    - name: Copy Solr components into place.
+      shell: >
+        cp -r {{ item.src }} {{ item.dest }}
+        creates={{ item.creates }}
+      with_items:
+        - {
+          src: "{{ solr_dir }}/example/webapps/solr.war",
+          dest: "{{ solr_dir }}/solr.war",
+          creates: "{{ solr_dir }}/solr.war"
+        }
+        - {
+          src: "{{ solr_dir }}/example/solr/*",
+          dest: "{{ solr_dir }}/",
+          creates: "{{ solr_dir }}/solr.xml"
+        }
+        # log4j config
+        - {
+          src: "{{ solr_dir }}/example/lib/ext/*",
+          dest: "/var/lib/tomcat7/shared/",
+          creates: "/var/lib/tomcat7/shared/log4j-*.jar"
+        }
+        - {
+          src: "{{ solr_dir }}/example/resources/log4j.properties",
+          dest: "/var/lib/tomcat7/shared/classes",
+          creates: "/var/lib/tomcat7/shared/classes/log4j.properties"
+        }
+      notify: restart tomcat
