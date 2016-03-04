@@ -1,0 +1,67 @@
+# this is a sample file with code pieces that may be useful
+
+# we may load some settings files this way
+vars_files:
+    - somefile.yml
+
+# installing apps through apt
+apt: name={{ item }} update_cache=yes cache_valid_time=3600
+sudo: True
+with_items:
+    - pack_1
+    - pack_2
+
+# using git to checkout a repo
+git: repo={{ my_repo }} dest={{ some_path }}
+
+# installing packages to venv
+
+pip: requirements=/my/requirements.txt virtualenv={{ venv_path }}
+
+pip: name={{ itme }} virtualenv={{ venv_path }}
+with_items: 
+  - item1
+  - item2
+  - item3
+
+# enhanced dict syntax:
+pip: name={{ item.name }} version={{ item.version }}
+with_items:
+    - { name: package, version: 1.0 }
+
+
+# using postgres, creating user:
+postgresql_user:
+    name: "{{ database_user }}"
+    password: "{{ database_password }}"
+sudo: True
+sudo_user: postgres
+
+# creating database
+postgresql_db:
+    name: "{{ database_name }}"
+    owner: "{{ database_user }}"
+    encoding: UTF8
+    lc_ctype: "{{ locale }}"
+    lc_collate: "{{ locale }}"
+    template: template0
+sudo: True
+sudo_user: postgres
+
+# running custom scripts:
+script: my_script.py
+environment:
+    PATH: "{{ venv }}/bin"
+
+# doing something var is set
+command: >
+    openssl req -new -x509 -nodes -out {{ proj_name }}.crt
+    -keyout {{ proj_name }}.key -subj '/CN={{ domains[0] }}' -days 3650
+    chdir={{ conf_path }}
+    creates={{ conf_path }}/{{ proj_name }}.crt
+sudo: True
+when: tls_enabled
+notify: restart nginx
+
+# using cron
+cron: name="my task" minute="*/5" user="{{ user }}" job="{{ manage }} do_smt"

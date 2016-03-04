@@ -1,0 +1,8 @@
+drupal_core_version: "8.0.x"
+drupal_core_path: "/var/www/drupal-{{ drupal_core_version }}-dev"
+domain: "drupaltest"
+
+drupal_site_name: "Drupal8"
+drupal_login: "admin"
+# Storing passwords in VCS is a VERY BAD IDEA. For demo purposes only.
+drupal_password: "d1davhr031idjqksdvlj42ur304u12034u21d"

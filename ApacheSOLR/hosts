@@ -1,0 +1,6 @@
+[solr]
+192.168.43.4
+
+[solr:vars]
+ansible_ssh_user=vagrant
+ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key

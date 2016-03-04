@@ -1,0 +1,17 @@
+- name: Installing zabbix server
+  vars_file: vars/zabbix.yml
+
+  tasks:
+    - name: add zabbix repo
+      apt_repository: repo:'ppa:h.tims/upstream-experimental' state=present
+
+    - name: Install mysql, zabbix-server
+      apt: name={{ item }} update_cache=yes
+      with_items:
+        - mysql-server
+        - mysql-client
+        - zabbix-server-mysql
+        - lighttpd
+        - php5-cgi
+        - zabbix-frontend-php
+        - nmap

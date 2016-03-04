@@ -1,0 +1,140 @@
+- hosts: all
+  sudo: yes
+  
+  vars_files:
+  - vars.yml
+
+  pre_tasks:
+  - name: Update apt cache if required
+    apt: update_cache=yes cache_valid_time=10800
+
+  # --force-handlers key may be used to always run handlers even if task failed
+  handlers:
+  - name: restart apache
+    service: name=apache2 state=restarted
+
+  tasks:
+  - name: Install packages for repository management
+    apt: name={{ item }} state=installed
+    with_items: 
+      - python-apt
+      - python-pycurl
+
+  - name: Install Apache, MySQL, PHP, and other dependencies.
+    apt: name={{ item }} state=installed
+    with_items: 
+    - git
+    - curl
+    - sendmail
+    - apache2
+    - php5
+    - php5-common
+    - php5-mysql
+    - php5-cli
+    - php5-gd
+    - php5-dev
+    - php5-mcrypt
+    - php-apc
+    - php-pear
+    - python-mysqldb
+    - mysql-server
+
+  # If on a production server or any server exposed to the Internet, 
+  # you should instead have a restrictive firewall only allowing access on
+  # ports 22, 80, 443, and other necessary ports.
+  - name: Disable firewall (Dev Environment)
+    service: name=ufw state=stopped
+
+  - name: Start Apache, MySQL, and PHP
+    service: name={{ item }} state=started enabled=yes
+    with_items: 
+       - apache2
+       - mysql
+
+  - name: Enable rewrite module for Drupal
+    apache2_module: name=rewrite state=present
+    notify: restart apache
+
+  - name: Add Apache virtualhost
+    template:
+      src: "templates/drupal.dev.conf.j2"
+      dest: "/etc/apache2/sites-available/{{ domain }}.dev.conf"
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart apache
+
+  - name: Symlink virtualhost
+    file:
+      src: "/etc/apache2/sites-available/{{ domain }}.dev.conf"
+      dest: "/etc/apache2/sites-enabled/{{ domain }}.dev.conf"
+      state: link
+    notify: restart apache
+
+  - name: remove default virtualhost
+    file:
+      path: "/etc/apache2/sites-enabled/000-default"
+      state: absent
+    notify: restart apache
+
+  - name: Enable upload progress via APC
+    lineinfile:
+      dest: "/etc/php5/apache2/conf.d/20-apcu.ini"
+      # here we find config line and change it
+      regexp: "^apc.rfc1867"
+      line: "apc.rfc1867 = 1"
+      state: present
+    notify: restart
+
+  # in production default credentials for MySQL MUST be changed!
+  - name: Remove the MySQL test database.
+    mysql_db: db=test state=absent
+
+  - name: Create Drupal database
+    mysql_db: "db={{ domain }} state=present"
+
+  - name: Install Composer
+    shell: >
+      curl -sS https://getcomposer.org/installer | php
+      creates=/usr/local/bin/composer
+
+  - name: Move Composer into globally-accessible location
+    shell: >
+      mv composer.phar /usr/local/bin/composer
+      creates=/usr/local/bin/composer
+
+  - name: Check out drush master branch
+    git:
+      repo: https://github.com/drush-ops/drush.git
+      dest: /opt/drush
+
+  - name: Install Drush deps with Composer
+    shell: >
+      /usr/local/bin/composer install
+      chdir=/opt/drush
+      creates=/opt/drush/vendor/autoload.php
+
+  - name: Create drush bin symlink
+    file:
+      src: /opt/drush/drush
+      dest: /usr/local/bin/drush
+      state: link
+
+  - name: Check out Drupal Core to the apache docroot
+    git:
+      repo: http://git.drupal.org/project/drupal.git
+      version: "{{ drupal_core_version }}"
+      dest: "{{ drupal_core_path }}"
+
+  - name: Install Drupal
+    command: >
+      drush si -y --site-name="{{ drupal_site_name }}" --account-name={{ drupal_login }} --account-pass={{ drupal_password }} --db-url=mysql://root@localhost/{{ domain }}
+      chdir={{ drupal_core_path }}
+      creates={{ drupal_core_path }}/sites/default/settings.php
+      mode: 0744
+  - name: Set permission on files directory.
+    file:
+      path: "{{ drupal_core_path }}/sites/default/files"
+      mode: 0777
+      state: directory
+      recurse: yes 
